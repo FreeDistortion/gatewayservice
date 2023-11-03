@@ -1,0 +1,68 @@
+server:
+  port: 8000
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: GlobalFilter
+          args:
+            message: global filter test...
+            check: true
+      routes:
+        - id: firstservice
+#          uri:
+#            http://localhost:9101/
+          uri:
+            # load balance
+            lb://myfirstservice
+          predicates:
+            - Path=/first/**
+            - After=2023-11-06T09:40:47.789+09:00[Asia/Seoul]
+#           이 부분은 조건이므로 없으면 실행이 안 됨
+            - Header=X-PHOTO-VER,2.0.0
+          filters:
+            - AddRequestHeader=data,mydata
+#            - AddResponseHeader=firstres,responseheaderfiltertest
+            - FilterA
+            - FilterB
+            - FilterC
+            - MyFilter
+            - OrderTestFilter
+
+
+        - id: secondservice
+          uri:
+            lb://mysecondservice
+#            http://localhost:9102/
+          predicates:
+            - Path=/second/**
+          filters:
+            - AddRequestHeader=data,test
+            - FilterA
+            - FilterB
+#            - AddResponseHeader=secondres,responseheaderfiltertest2
+            - MyFilter
+            - OrderTestFilter
+
+        - id: thirdservice
+          uri:
+            http://localhost:9103/
+          predicates:
+            - Path=/third/**
+          filters:
+            - AddRequestHeader=data,mydata
+            - AddResponseHeader=thirdres,responseheaderfiltertest3
+            - FilterA
+            - FilterB
+            - FilterC
